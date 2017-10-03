@@ -3,6 +3,7 @@
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.12.4/jquery.min.js"></script>
   <link rel="stylesheet" href="https://openlayers.org/en/v4.3.4/css/ol.css" type="text/css">
   <script src="https://openlayers.org/en/v4.3.4/build/ol.js"></script>
     <style>
@@ -33,6 +34,8 @@
     <div id="map" class="map" tabindex="0"></div>
     <button id="zoom-out">Zoom out</button>
     <button id="zoom-in">Zoom in</button>
+    <br>
+    <div id="myposition"> ttt</div>
     <script>
         var image = new ol.style.Circle({
           radius: 5,
@@ -103,37 +106,37 @@
             })
           })
         };
-
+        function sleep(ms) {
+          return new Promise(resolve => setTimeout(resolve, ms));
+        }
         var styleFunction = function(feature) {
           return styles[feature.getGeometry().getType()];
         }; 
 
-        
-        var vectorSource = new ol.source.Vector({
-          format: new ol.format.GeoJSON(),
-          loader: function(extent, resolution, projection) {
-            var url = 'https://github.com/Dkrav-UA/opendata/raw/master/streets/streets.json';
-            $.ajax({
-              url: url,
-              success: function(data) {
-                vectorSource.addFeatures(vectorSource.readFeatures(data));
-              }
-            }); 
-          },
-          projection: 'EPSG:3857',
-          strategy: ol.loadingstrategy.bbox
+        var features = [];
+        var i=0;
+        var done = 0
+        $.ajaxSetup({
+            async: false
         });
+        $.getJSON( "https://raw.githubusercontent.com/Dkrav-UA/opendata/master/streets/streets.json",
+                    function( data ) {
+           //console.log (data);
+          $.each( data, function( obj ) {
+            var point = new ol.geom.Point(ol.proj.transform([data[obj].lat, data[obj].lon], 'EPSG:4326', 'EPSG:3857'));
+            i = features.push(new ol.Feature(point)); //new ol.geom.Point(coordinates)));
+            //console.log(i);
+          });
+          done = 1
+        });
+        //while (done == 0 ) {sleep(2000);console.log('wakeup')};
+        //console.log ('Point:',features, features.length, i);      
         var layer1=new ol.layer.Vector({
-          source: new ol.source.Vector({
-            url: 'https://github.com/Dkrav-UA/opendata/raw/master/streets/streets.json',
-            format: new ol.format.GeoJSON({
-            defaultDataProjection :'EPSG:4326', 
-            projection: 'EPSG:3857'
-            })
-          }),
+          source: new ol.source.Vector({features: features}),
           name: 'Заявки',
           style: styleFunction
-        });        
+        });
+        //console.log (layer1.getSource());
       var map = new ol.Map({
         layers: [
           new ol.layer.Tile({
@@ -151,6 +154,9 @@
                 zoom: 11
               })
       });
+        $.ajaxSetup({
+            async: true
+        });
 
       document.getElementById('zoom-out').onclick = function() {
         var view = map.getView();
@@ -163,6 +169,13 @@
         var zoom = view.getZoom();
         view.setZoom(zoom + 1);
       };
+      var mousePosition = new ol.control.MousePosition({
+        coordinateFormat: ol.coordinate.createStringXY(2),
+        target: document.getElementById('myposition'),
+        undefinedHTML: '&nbsp;'
+      });
+
+      map.addControl(mousePosition);      
     </script>
 </body>
 </html>
