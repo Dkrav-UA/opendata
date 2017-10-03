@@ -1,2 +1,2 @@
 # Streets.
-[Map] (https://dkrav-ua.github.io/opendata/)
+[Map](https://dkrav-ua.github.io/opendata/)
