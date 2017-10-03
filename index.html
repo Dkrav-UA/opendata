@@ -1,5 +1,8 @@
+<!DOCTYPE html>
 <html>
 <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
   <link rel="stylesheet" href="https://openlayers.org/en/v4.3.4/css/ol.css" type="text/css">
   <script src="https://openlayers.org/en/v4.3.4/build/ol.js"></script>
     <style>
@@ -31,11 +34,112 @@
     <button id="zoom-out">Zoom out</button>
     <button id="zoom-in">Zoom in</button>
     <script>
+        var image = new ol.style.Circle({
+          radius: 5,
+          fill: null,
+          stroke: new ol.style.Stroke({color: 'red', width: 1})
+        });            
+        var styles = {
+          'Point': new ol.style.Style({
+            image: image
+          }),
+          'LineString': new ol.style.Style({
+            stroke: new ol.style.Stroke({
+              color: 'green',
+              width: 1
+            })
+          }),
+          'MultiLineString': new ol.style.Style({
+            stroke: new ol.style.Stroke({
+              color: 'green',
+              width: 1
+            })
+          }),
+          'MultiPoint': new ol.style.Style({
+            image: image
+          }),
+          'MultiPolygon': new ol.style.Style({
+            stroke: new ol.style.Stroke({
+              color: 'yellow',
+              width: 1
+            }),
+            fill: new ol.style.Fill({
+              color: 'rgba(255, 255, 0, 0.1)'
+            })
+          }),
+          'Polygon': new ol.style.Style({
+            stroke: new ol.style.Stroke({
+              color: 'blue',
+              lineDash: [4],
+              width: 3
+            }),
+            fill: new ol.style.Fill({
+              color: 'rgba(0, 0, 255, 0.1)'
+            })
+          }),
+          'GeometryCollection': new ol.style.Style({
+            stroke: new ol.style.Stroke({
+              color: 'magenta',
+              width: 2
+            }),
+            fill: new ol.style.Fill({
+              color: 'magenta'
+            }),
+            image: new ol.style.Circle({
+              radius: 10,
+              fill: null,
+              stroke: new ol.style.Stroke({
+                color: 'magenta'
+              })
+            })
+          }),
+          'Circle': new ol.style.Style({
+            stroke: new ol.style.Stroke({
+              color: 'red',
+              width: 2
+            }),
+            fill: new ol.style.Fill({
+              color: 'rgba(255,0,0,0.2)'
+            })
+          })
+        };
+
+        var styleFunction = function(feature) {
+          return styles[feature.getGeometry().getType()];
+        }; 
+
+        
+        var vectorSource = new ol.source.Vector({
+          format: new ol.format.GeoJSON(),
+          loader: function(extent, resolution, projection) {
+            var url = 'https://github.com/Dkrav-UA/opendata/raw/master/streets/streets.json';
+            $.ajax({
+              url: url,
+              success: function(data) {
+                vectorSource.addFeatures(vectorSource.readFeatures(data));
+              }
+            }); 
+          },
+          projection: 'EPSG:3857',
+          strategy: ol.loadingstrategy.bbox
+        });
+        var layer1=new ol.layer.Vector({
+          source: new ol.source.Vector({
+            url: 'https://github.com/Dkrav-UA/opendata/raw/master/streets/streets.json',
+            format: new ol.format.GeoJSON({
+            defaultDataProjection :'EPSG:4326', 
+            projection: 'EPSG:3857'
+            })
+          }),
+          name: 'Заявки',
+          style: styleFunction
+        });        
       var map = new ol.Map({
         layers: [
           new ol.layer.Tile({
             source: new ol.source.OSM()
-          })
+          }),
+          layer1
         ],
         target: 'map',
         controls: ol.control.defaults({
